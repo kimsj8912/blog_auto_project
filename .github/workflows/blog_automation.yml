@@ -1,5 +1,8 @@
 name: Blog Auto Publisher
 
+env: # 경고를 없애기 위한 환경변수 추가
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   schedule:
     # 3일에 한 번, 한국 시간(KST) 오전 10시에 실행
