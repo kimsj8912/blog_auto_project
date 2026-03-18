@@ -1,0 +1,44 @@
+name: Blog Auto Publisher
+
+on:
+  schedule:
+    # 3일에 한 번, 한국 시간(KST) 오전 10시에 실행
+    # (GitHub Actions는 UTC 기준이므로 KST에서 9시간을 빼서 새벽 1시로 설정)
+    - cron: '0 1 */3 * *'
+  workflow_dispatch: # GitHub 웹사이트에서 수동으로 '실행' 버튼을 누를 수 있게 해줌
+
+jobs:
+  run-automation:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. 저장소 코드 가져오기
+      uses: actions/checkout@v4
+
+    - name: 2. 파이썬 환경 세팅
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip' # 패키지 설치 속도 향상
+
+    - name: 3. 필요 패키지 설치
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 4. 블로그 자동화 파이썬 스크립트 실행
+      env:
+        # GitHub Secrets에서 키를 가져와 환경 변수로 주입
+        SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: python main.py
+
+    - name: 5. 생성된 원고, 상태 기록을 저장소에 커밋(Commit)
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        # 변경된 파일이 있을 경우에만 커밋
+        git commit -m "🤖 Auto-generated: 블로그 원고 업데이트" || echo "No changes to commit"
+        git push

@@ -1,5 +1,6 @@
 import os
 import time
+import requests # 슬랙 웹훅용
 from rss_parser import fetch_latest_it_news
 from content_generator import select_best_topic_and_summarize, generate_mentoring_post, generate_news_post
 
@@ -36,7 +37,6 @@ def run_automation():
         # 가장 첫 번째(최신) 기사를 선택
         target_news = news_list[0]
         title_for_image = target_news['title']
-        summary_for_image = "Latest IT trend and software news."
         
         # 원고 작성
         draft = generate_news_post(target_news)
@@ -50,24 +50,43 @@ def run_automation():
             
         print(f"📌 선정된 주제: {plan['title']}")
         title_for_image = plan['title']
-        summary_for_image = plan['summary']
         
         time.sleep(5) # API 할당량 보호 (429 에러 방지)
         
         # 원고 작성
         draft = generate_mentoring_post(plan)
 
-    # 결과물 저장 (텍스트)
     filename = f"post_Category_{current_category}.md"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(draft)
     print(f"✅ 원고 작성 완료 ({filename})")
-    
-    time.sleep(5) # API 할당량 보호
 
-    # 모든 작업이 성공적으로 끝나면 상태 저장
+    time.sleep(5) # API 할당량 보호
+    
+    # 모든 작업 완료 후 상태 저장
     save_current_category(current_category)
-    print(f"\n🎉 작업 완료! 다음 실행 시에는 카테고리 {'B' if current_category == 'A' else 'A'}가 실행됩니다.")
+    print(f"\n다음 실행 시에는 카테고리 {'B' if current_category == 'A' else 'A'}가 실행됩니다.")
+    
+    # 슬랙 알림 쏘기!
+    send_slack_notification(current_category, title_for_image, filename)
+    print("\n🎉 모든 작업 완료!")
+    
+def send_slack_notification(category, title, filename):
+    """슬랙으로 완료 알림을 전송합니다."""
+    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+    if not webhook_url:
+        print("⚠️ 슬랙 웹훅 URL이 설정되지 않아 알림을 생략합니다.")
+        return
+
+    message = {
+        "text": f"🎉 *새로운 블로그 원고 자동 생성 완료!*\n\n* 카테고리: {category}\n* 제목: {title}\n* 파일명: {filename}\n\nGitHub 저장소에서 원고를 확인해 주세요! 🚀"
+    }
+    try:
+        requests.post(webhook_url, json=message)
+        print("🔔 슬랙 알림 전송 완료!")
+    except Exception as e:
+        print(f"❌ 슬랙 알림 전송 실패: {e}")
+
 
 if __name__ == "__main__":
     run_automation()
