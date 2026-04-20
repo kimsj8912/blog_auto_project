@@ -1,10 +1,10 @@
 import os
-import google.generativeai as genai
+from google.genai import Client
 from dotenv import load_dotenv
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+MODEL_ID = "gemini-2.5-flash"
 
 def select_best_topic_and_summarize():
     """keywords_queue.txt에서 최적의 주제를 선정하고 요약을 생성합니다."""
@@ -39,9 +39,12 @@ def select_best_topic_and_summarize():
     }}
     """
     
-    response = model.generate_content(prompt)
-    
+    response = client.models.generate_content(model=MODEL_ID, contents=prompt)
+
     # JSON 형태의 응답을 파싱 (Gemini가 마크다운 코드 블록으로 감쌀 수 있으므로 정제 필요)
     import json
-    raw_text = response.text.replace("```json", "").replace("```", "").strip()
+    response_text = response.text
+    if not response_text:
+        return None
+    raw_text = response_text.replace("```json", "").replace("```", "").strip()
     return json.loads(raw_text)

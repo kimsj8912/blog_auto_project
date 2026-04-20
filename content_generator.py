@@ -26,7 +26,12 @@ def select_best_topic_and_summarize():
     
     response = client.models.generate_content(model=MODEL_ID, contents=prompt)
     try:
-        clean_json = response.text.replace("```json", "").replace("```", "").strip()
+        response_text = response.text
+        if not response_text:
+            print("❌ JSON 파싱 에러: Gemini 응답이 비어 있습니다.")
+            return None
+
+        clean_json = response_text.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
     except Exception as e:
         print(f"❌ JSON 파싱 에러: {e}")
