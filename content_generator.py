@@ -1,11 +1,39 @@
 import os
-from google.genai import Client # 새로운 패키지 호출 방식
+from google.genai import Client, errors, types
 from dotenv import load_dotenv
 import json
 
 load_dotenv()
-client = Client(api_key=os.getenv("GEMINI_API_KEY"))
-MODEL_ID = "gemini-2.5-flash"
+
+# 서버 과부하(503) 같은 일시적 오류는 SDK가 지수 백오프로 다시 시도한다.
+# 1초, 2초, 4초, 8초... 간격(최대 60초)으로 첫 호출 포함 5번까지 시도한다.
+RETRY_OPTIONS = types.HttpRetryOptions(
+    attempts=5,
+    initial_delay=1.0,
+    max_delay=60.0,
+    exp_base=2,
+    http_status_codes=[408, 429, 500, 502, 503, 504],
+)
+client = Client(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    http_options=types.HttpOptions(retry_options=RETRY_OPTIONS),
+)
+
+# 앞의 모델이 재시도 후에도 실패하면 다음 모델로 넘어간다.
+MODEL_IDS = ["gemini-3.5-flash", "gemini-2.5-flash"]
+
+
+def generate(prompt):
+    """Gemini로 글을 생성한다. 기본 모델이 계속 실패하면 대체 모델을 쓴다."""
+    last_error = None
+    for model_id in MODEL_IDS:
+        try:
+            response = client.models.generate_content(model=model_id, contents=prompt)
+            return response.text
+        except errors.APIError as e:
+            print(f"⚠️ [{model_id}] 호출 실패 ({e.code}): {e.message}")
+            last_error = e
+    raise last_error
 
 def select_best_topic_and_summarize():
     """[카테고리 B] keywords_queue.txt에서 최적의 주제 선정"""
@@ -24,9 +52,9 @@ def select_best_topic_and_summarize():
     {{"selected_keyword": "키워드", "title": "제목", "summary": "핵심 3가지 요약", "reason": "이유"}}
     """
     
-    response = client.models.generate_content(model=MODEL_ID, contents=prompt)
+    text = generate(prompt)
     try:
-        clean_json = response.text.replace("```json", "").replace("```", "").strip()
+        clean_json = text.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
     except Exception as e:
         print(f"❌ JSON 파싱 에러: {e}")
@@ -47,8 +75,7 @@ def generate_mentoring_post(topic_data):
     3. 가독성: 소제목(##)으로 흐름을 나누고, 문단은 짧게 끊어주세요.
     4. 마무리: 독자가 자신의 상황을 돌아볼 수 있는 차분한 질문을 던지며 마무리하고, 관련 해시태그 5개를 추가하세요.
     """
-    response = client.models.generate_content(model=MODEL_ID, contents=prompt)
-    return response.text
+    return generate(prompt)
 
 def generate_news_post(news_data):
     """[카테고리 A] 해외 IT 뉴스 원고 작성"""
@@ -65,5 +92,4 @@ def generate_news_post(news_data):
     3. 가독성: 소제목(##)과 글머리 기호(-)를 활용해 정보를 깔끔하게 정리하세요.
     4. 마무리: 독자의 의견을 묻는 정중한 질문과 함께 해시태그 5개를 추가하세요.
     """
-    response = client.models.generate_content(model=MODEL_ID, contents=prompt)
-    return response.text
+    return generate(prompt)
