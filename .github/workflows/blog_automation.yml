@@ -1,13 +1,11 @@
 name: Blog Auto Publisher
 
-env: # 경고를 없애기 위한 환경변수 추가
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   schedule:
-    # 3일에 한 번, 한국 시간(KST) 오전 10시에 실행
+    # 매주 월·목, 한국 시간(KST) 오전 10시에 실행
     # (GitHub Actions는 UTC 기준이므로 KST에서 9시간을 빼서 새벽 1시로 설정)
-    - cron: '0 1 */3 * *'
+    # 날짜 기준(*/3)은 31일과 다음 달 1일에 이틀 연속 실행되어 요일 기준으로 바꿈
+    - cron: '0 1 * * 1,4'
   workflow_dispatch: # GitHub 웹사이트에서 수동으로 '실행' 버튼을 누를 수 있게 해줌
 
 jobs:
@@ -16,10 +14,10 @@ jobs:
 
     steps:
     - name: 1. 저장소 코드 가져오기
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: 2. 파이썬 환경 세팅
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.12'
         cache: 'pip' # 패키지 설치 속도 향상

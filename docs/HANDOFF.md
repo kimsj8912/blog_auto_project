@@ -29,12 +29,12 @@
 ## 단계
 
 - [x] **0. 클론과 인수인계**: 로컬 환경(`.venv`, Python 3.12), `.env` 템플릿, 이 문서와 `CLAUDE.md`
-- [ ] **1. 깃 액션 안정화**
-  - Gemini 호출에 재시도(지수 백오프)와 대체 모델 넣기
-  - 최신 Flash 모델로 교체(공식 가격표 확인)
-  - 크론을 요일 기준으로 변경: 지금의 `*/3`은 월말에 이틀 연속 실행됨
-  - `planner.py` 삭제, 액션 버전 올리기(Node 20 경고)
-  - The Verge RSS 주소 교체: 지금 주소 `/tech/rss/index.xml`은 404이고, `https://www.theverge.com/rss/tech/index.xml`은 정상(2026-11-25 확인)
+- [x] **1. 깃 액션 안정화**
+  - Gemini 호출에 재시도(SDK `HttpRetryOptions`, 지수 백오프 5회)와 대체 모델(`gemini-2.5-flash`) 넣기
+  - 기본 모델을 `gemini-3.5-flash`로 교체
+  - 크론을 요일 기준(매주 월·목 KST 10시, `0 1 * * 1,4`)으로 변경: 예전 `*/3`은 월말에 이틀 연속 실행됐음
+  - `planner.py` 삭제, `actions/checkout`·`actions/setup-python`을 v7로 올림
+  - The Verge RSS 주소를 `https://www.theverge.com/rss/tech/index.xml`로 교체(예전 `/tech/rss/index.xml`은 404)
 - [ ] **2. 대본 단계** (`shorts/pipeline/`, Python): 원문 → 분석 → 관점 → 스토리보드 JSON. 화면에 나올 숫자를 원문과 대조하는 검사 포함
 - [ ] **3. 음성 단계**: Typecast 타임스탬프 API로 장면별 음성과 단어 시각 저장
 - [ ] **4. 영상 단계** (`shorts/video/`, Remotion)

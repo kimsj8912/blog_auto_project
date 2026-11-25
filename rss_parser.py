@@ -6,7 +6,7 @@ def fetch_latest_it_news():
     # 타겟 RSS 피드 주소 (언제든 추가/변경 가능)
     rss_urls = {
         "TechCrunch (AI)": "https://techcrunch.com/category/artificial-intelligence/feed/",
-        "The Verge (Tech)": "https://www.theverge.com/tech/rss/index.xml"
+        "The Verge (Tech)": "https://www.theverge.com/rss/tech/index.xml"
     }
     
     collected_news = []

@@ -9,7 +9,6 @@ IT 블로그 원고를 자동으로 쓰는 프로젝트에, 리서치 자료를 
 - `content_generator.py`: Gemini(`google-genai` SDK) 호출.
 - `keyword_extractor.py`: Serper로 키워드 큐 생성(수동 실행).
 - `.github/workflows/blog_automation.yml`: 주기 실행 후 결과를 커밋.
-- `planner.py`: 쓰이지 않는 옛 코드(지원 종료된 `google.generativeai` 사용). 정리 대상.
 
 ## 로컬 실행
 
