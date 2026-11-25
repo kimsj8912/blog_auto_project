@@ -1,0 +1,5 @@
+# 숏츠 대본 파이프라인용 추가 패키지 (블로그 깃 액션에는 필요 없음)
+-r ../requirements.txt
+pypdf==7.1.1
+beautifulsoup4==4.15.0
+pytest==9.2.0

@@ -1,6 +1,6 @@
 # 인수인계: 리서치 → 숏츠 영상 자동화
 
-최종 갱신: 2026-11-25
+최종 갱신: 2026-11-25 (2단계)
 
 ## 목표
 
@@ -35,7 +35,13 @@
   - 크론을 요일 기준(매주 월·목 KST 10시, `0 1 * * 1,4`)으로 변경: 예전 `*/3`은 월말에 이틀 연속 실행됐음
   - `planner.py` 삭제, `actions/checkout`·`actions/setup-python`을 v7로 올림
   - The Verge RSS 주소를 `https://www.theverge.com/rss/tech/index.xml`로 교체(예전 `/tech/rss/index.xml`은 404)
-- [ ] **2. 대본 단계** (`shorts/pipeline/`, Python): 원문 → 분석 → 관점 → 스토리보드 JSON. 화면에 나올 숫자를 원문과 대조하는 검사 포함
+- [x] **2. 대본 단계** (`shorts/pipeline/`, Python): 원문 → 분석 → 관점 → 스토리보드 JSON. 화면에 나올 숫자를 원문과 대조하는 검사 포함
+  - 실행: `python -m shorts.pipeline --source <PDF·텍스트·웹 주소>` → `.local/runs/<시각-제목>/`에 `source/analysis/perspective/storyboard.json`, `verify.json`, `review.md`
+  - 뒷단계만 다시: `--run-dir <폴더> --from storyboard` (앞 단계 결과를 다시 쓰므로 Gemini 호출이 줄어든다)
+  - 관점 가이드: `.local/perspective.md`(git 제외). 없으면 중립 해설. 서식은 `shorts/perspective.example.md`
+  - 검사기(`verify.py`): 인용이 원문에 그대로 있는지, 화면 숫자가 원문 숫자와 같은지, 예시값·"우리 해석" 표시, 내레이션의 숫자·영문, 설정이 다른 숫자 섞임, 예상 길이. 상대 비교 claim을 쓴 장면은 "사람 확인"으로 남긴다
+  - 길이 추정은 초당 6.3음절(속도 0.9 가정)이다. 3단계에서 실제 음성 길이로 다듬는다
+  - 실제 Gemini 호출로는 아직 돌려 보지 않았다(테스트는 가짜 응답 사용). 첫 실제 실행에서 프롬프트를 다듬는다
 - [ ] **3. 음성 단계**: Typecast 타임스탬프 API로 장면별 음성과 단어 시각 저장
 - [ ] **4. 영상 단계** (`shorts/video/`, Remotion)
   - 고정 뼈대: 색·폰트 토큰, 자막 컴포넌트, 내레이션 배치, 시간 맞춤

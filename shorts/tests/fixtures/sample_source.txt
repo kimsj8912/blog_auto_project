@@ -1,0 +1,7 @@
+Coordination Premiums in Small Teams (synthetic test fixture)
+
+We study a stylized model of teams with specialists and coordinators.
+In the baseline setting with an outside option of 0.25, coordinators earn 2.41 while specialists earn 4.15.
+As automation spreads, coordinators earn relatively more compared to specialists, although absolute wages for both groups decline.
+Specialists are not displaced; they move into niche markets where automated tools are weaker.
+All numbers above are illustrative values from the model, not forecasts.
