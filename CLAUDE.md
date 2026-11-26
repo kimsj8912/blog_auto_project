@@ -15,12 +15,14 @@ IT 블로그 원고를 자동으로 쓰는 프로젝트에, 리서치 자료를 
 - `gemini_client.py`: Gemini 공용 호출(재시도·대체 모델, `generate`, Pydantic 구조화 출력 `generate_json`). 블로그와 숏츠가 같이 쓴다.
 - `shorts/pipeline/`: 2단계 대본 단계. `sources.py`(원문 읽기) → `stages.py`(분석·관점·스토리보드) → `verify.py`(원문 대조 검사) → `report.py`(검수용 `review.md`).
 - `shorts/voice/`: 3단계 음성 단계. `typecast.py`(타임스탬프 포함 합성) → `voice.json`과 `audio/sceneN.wav`.
+- `shorts/video/`: 4단계 영상 단계(Remotion). 실행 폴더를 public 폴더로 열어 `video.mp4`를 만든다. 장면 연출은 `src/scenes/`만 고친다.
 - 결과물은 `.local/runs/`(git 제외)에 저장한다.
 
 ```bash
 .venv/bin/pip install -r shorts/requirements.txt
 .venv/bin/python -m shorts.pipeline --source paper.pdf
 .venv/bin/python -m shorts.voice --run-dir .local/runs/<폴더>   # Typecast 크레딧 사용
+cd shorts/video && npm install && npm run render -- --run-dir ../../.local/runs/<폴더>
 .venv/bin/python -m pytest shorts
 ```
 
