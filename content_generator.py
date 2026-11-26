@@ -1,39 +1,8 @@
 import os
-from google.genai import Client, errors, types
-from dotenv import load_dotenv
 import json
 
-load_dotenv()
+from gemini_client import generate
 
-# 서버 과부하(503) 같은 일시적 오류는 SDK가 지수 백오프로 다시 시도한다.
-# 1초, 2초, 4초, 8초... 간격(최대 60초)으로 첫 호출 포함 5번까지 시도한다.
-RETRY_OPTIONS = types.HttpRetryOptions(
-    attempts=5,
-    initial_delay=1.0,
-    max_delay=60.0,
-    exp_base=2,
-    http_status_codes=[408, 429, 500, 502, 503, 504],
-)
-client = Client(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    http_options=types.HttpOptions(retry_options=RETRY_OPTIONS),
-)
-
-# 앞의 모델이 재시도 후에도 실패하면 다음 모델로 넘어간다.
-MODEL_IDS = ["gemini-3.5-flash", "gemini-2.5-flash"]
-
-
-def generate(prompt):
-    """Gemini로 글을 생성한다. 기본 모델이 계속 실패하면 대체 모델을 쓴다."""
-    last_error = None
-    for model_id in MODEL_IDS:
-        try:
-            response = client.models.generate_content(model=model_id, contents=prompt)
-            return response.text
-        except errors.APIError as e:
-            print(f"⚠️ [{model_id}] 호출 실패 ({e.code}): {e.message}")
-            last_error = e
-    raise last_error
 
 def select_best_topic_and_summarize():
     """[카테고리 B] keywords_queue.txt에서 최적의 주제 선정"""

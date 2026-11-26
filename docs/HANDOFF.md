@@ -1,6 +1,6 @@
 # 인수인계: 리서치 → 숏츠 영상 자동화
 
-최종 갱신: 2026-11-25
+최종 갱신: 2026-11-25 (2단계)
 
 ## 목표
 
@@ -35,7 +35,15 @@
   - 크론을 요일 기준(매주 월·목 KST 10시, `0 1 * * 1,4`)으로 변경: 예전 `*/3`은 월말에 이틀 연속 실행됐음
   - `planner.py` 삭제, `actions/checkout`·`actions/setup-python`을 v7로 올림
   - The Verge RSS 주소를 `https://www.theverge.com/rss/tech/index.xml`로 교체(예전 `/tech/rss/index.xml`은 404)
-- [ ] **2. 대본 단계** (`shorts/pipeline/`, Python): 원문 → 분석 → 관점 → 스토리보드 JSON. 화면에 나올 숫자를 원문과 대조하는 검사 포함
+- [x] **2. 대본 단계** (`shorts/pipeline/`, Python): 원문 → 분석 → 관점 → 스토리보드 JSON. 화면에 나올 숫자를 원문과 대조하는 검사 포함
+  - 실행: `python -m shorts.pipeline --source <PDF·텍스트·웹 주소>` → `.local/runs/<시각-제목>/`에 `source/analysis/perspective/storyboard.json`, `verify.json`, `review.md`
+  - 뒷단계만 다시: `--run-dir <폴더> --from storyboard` (앞 단계 결과를 다시 쓰므로 Gemini 호출이 줄어든다)
+  - 관점 가이드: `.local/perspective.md`(git 제외). 없으면 중립 해설. 서식은 `shorts/perspective.example.md`
+  - 검사기(`verify.py`): 인용이 원문에 그대로 있는지, 화면 숫자가 원문 숫자와 같은지, 예시값·"우리 해석" 표시, 내레이션의 숫자·영문, 설정이 다른 숫자 섞임, 예상 길이. 상대 비교 claim을 쓴 장면은 "사람 확인"으로 남긴다
+  - 길이 추정은 초당 6.3음절(속도 0.9 가정)이다. 3단계에서 실제 음성 길이로 다듬는다
+  - 공개 논문(arXiv 2303.10130)으로 실제 Gemini 실행을 세 번 하며 프롬프트를 다듬었다: 단서 표현(could·weakly) 유지, 상관관계를 수준·인과로 바꾸지 않기, 원문 한계를 영상에 넣되 원문보다 세게 쓰지 않기, 숫자는 조건과 함께, hook은 소개 대신 숫자·질문으로, closing에는 해석을 넣지 않기. 검사기는 범위 값("47 and 56%")을 숫자마다 대조한다
+  - 실행마다 결과가 조금씩 달라서 단서가 빠지거나 비교 대상이 생략되는 일이 여전히 가끔 있다. 기계 검사를 통과해도 review.md의 "사람 확인" 항목은 꼭 읽는다
+  - PDF 메타데이터 때문에 제목이 "WORKING PAPER"처럼 잡힐 수 있다(`sources.py`, 아직 안 고침)
 - [ ] **3. 음성 단계**: Typecast 타임스탬프 API로 장면별 음성과 단어 시각 저장
 - [ ] **4. 영상 단계** (`shorts/video/`, Remotion)
   - 고정 뼈대: 색·폰트 토큰, 자막 컴포넌트, 내레이션 배치, 시간 맞춤

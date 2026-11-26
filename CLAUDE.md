@@ -6,9 +6,21 @@ IT 블로그 원고를 자동으로 쓰는 프로젝트에, 리서치 자료를 
 ## 지금 있는 것 (블로그 원고)
 
 - `main.py`: 카테고리 A(해외 IT 뉴스, `rss_parser.py`)와 B(IT 취업 키워드, `keywords_queue.txt`)를 번갈아 골라 원고를 쓰고 `post_Category_{A|B}.md`로 저장, 슬랙 알림.
-- `content_generator.py`: Gemini(`google-genai` SDK) 호출.
+- `content_generator.py`: 블로그 원고 프롬프트. Gemini 호출은 `gemini_client.py`를 쓴다.
 - `keyword_extractor.py`: Serper로 키워드 큐 생성(수동 실행).
 - `.github/workflows/blog_automation.yml`: 주기 실행 후 결과를 커밋.
+
+## 숏츠 파이프라인 (진행 중)
+
+- `gemini_client.py`: Gemini 공용 호출(재시도·대체 모델, `generate`, Pydantic 구조화 출력 `generate_json`). 블로그와 숏츠가 같이 쓴다.
+- `shorts/pipeline/`: 2단계 대본 단계. `sources.py`(원문 읽기) → `stages.py`(분석·관점·스토리보드) → `verify.py`(원문 대조 검사) → `report.py`(검수용 `review.md`).
+- 결과물은 `.local/runs/`(git 제외)에 저장한다.
+
+```bash
+.venv/bin/pip install -r shorts/requirements.txt
+.venv/bin/python -m shorts.pipeline --source paper.pdf
+.venv/bin/python -m pytest shorts
+```
 
 ## 로컬 실행
 
