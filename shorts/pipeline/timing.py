@@ -4,8 +4,8 @@ TARGET_SECONDS = (50, 60)
 HARD_MAX_SECONDS = 65
 MIN_SCENES, MAX_SCENES = 5, 8
 
-# Typecast 속도 0.9 기준 한국어 내레이션 대략 초당 6.3음절(공백 제외). 실측으로 다듬는다.
-CHARS_PER_SECOND = 6.3
+# Typecast ssfm-v30·속도 0.9 실측(2026-11-26, 6장면 261자/음성 44.9초)으로 초당 약 5.8음절(공백 제외).
+CHARS_PER_SECOND = 5.8
 # 원형 작업에서 정한 장면 앞뒤 여백: 말 시작 전 0.6초, 끝난 뒤 0.9초.
 SCENE_PADDING_SECONDS = 0.6 + 0.9
 
