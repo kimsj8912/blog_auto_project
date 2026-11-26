@@ -44,7 +44,11 @@
   - 공개 논문(arXiv 2303.10130)으로 실제 Gemini 실행을 세 번 하며 프롬프트를 다듬었다: 단서 표현(could·weakly) 유지, 상관관계를 수준·인과로 바꾸지 않기, 원문 한계를 영상에 넣되 원문보다 세게 쓰지 않기, 숫자는 조건과 함께, hook은 소개 대신 숫자·질문으로, closing에는 해석을 넣지 않기. 검사기는 범위 값("47 and 56%")을 숫자마다 대조한다
   - 실행마다 결과가 조금씩 달라서 단서가 빠지거나 비교 대상이 생략되는 일이 여전히 가끔 있다. 기계 검사를 통과해도 review.md의 "사람 확인" 항목은 꼭 읽는다
   - PDF 메타데이터 때문에 제목이 "WORKING PAPER"처럼 잡힐 수 있다(`sources.py`, 아직 안 고침)
-- [ ] **3. 음성 단계**: Typecast 타임스탬프 API로 장면별 음성과 단어 시각 저장
+- [x] **3. 음성 단계** (`shorts/voice/`, Python): Typecast 타임스탬프 API(`POST /v1/text-to-speech/with-timestamps`)로 장면별 음성과 단어 시각 저장
+  - 실행: `python -m shorts.voice --run-dir .local/runs/<폴더>` → `audio/sceneN.wav`, `voice.json`(장면별 음성 길이, 장면 길이 = 0.6 + 음성 + 0.9초, 단어별 start/end 초, 단어 시각이 내레이션을 덮는 비율)
+  - 크레딧 절약: 기본은 없는 장면이나 내레이션이 바뀐 장면만 만든다. `--only 2,5`, `--force`, `--sample`(장면 1만 미리 듣기)
+  - 앞뒤 장면 내레이션을 `prompt.previous_text/next_text`로 넘겨 억양을 잇는다(ssfm-v30 이상)
+  - 첫 실측(ssfm-v30, 속도 0.9): 초당 약 5.8음절이라 `timing.CHARS_PER_SECOND`를 6.3에서 5.8로 낮췄다. 출력 wav는 44.1kHz 16비트 모노
 - [ ] **4. 영상 단계** (`shorts/video/`, Remotion)
   - 고정 뼈대: 색·폰트 토큰, 자막 컴포넌트, 내레이션 배치, 시간 맞춤
   - Claude가 쓰는 부분: `scenes/` 아래 장면 파일만
