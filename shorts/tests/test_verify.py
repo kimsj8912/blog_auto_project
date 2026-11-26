@@ -5,7 +5,7 @@ import pytest
 from shorts.pipeline.schemas import (
     Analysis, Claim, Interpretation, Perspective, Scene, ScreenNumber, SourceNumber, Storyboard,
 )
-from shorts.pipeline.verify import normalize_text, numbers_in, quote_match, same_number, verify
+from shorts.pipeline.verify import normalize_text, numbers_in, quote_match, same_number, value_in_quote, verify
 
 SOURCE = (Path(__file__).parent / "fixtures" / "sample_source.txt").read_text(encoding="utf-8")
 
@@ -174,3 +174,12 @@ def test_source_number_not_in_quote_is_error(value):
     analysis.numbers[0].value = value
     report = verify(SOURCE, analysis, make_perspective(), good_storyboard())
     assert any("인용 구절 안에 없습니다" in m for m in errors_of(report))
+
+
+@pytest.mark.parametrize("value", ["47 and 56%", "47~56%"])
+def test_range_value_in_quote(value):
+    assert value_in_quote(value, "this share increases to between 47 and 56% of all tasks.")
+
+
+def test_range_value_with_wrong_end_is_not_in_quote():
+    assert not value_in_quote("47 and 60%", "between 47 and 56% of all tasks.")

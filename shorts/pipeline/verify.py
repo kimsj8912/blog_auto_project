@@ -85,6 +85,13 @@ def same_number(a: str, b: str) -> bool:
     return all(_as_float(x) == _as_float(y) for x, y in zip(na, nb))
 
 
+def value_in_quote(value: str, quote: str) -> bool:
+    """값 속 숫자가 모두 인용 구절에 있는지. '47 and 56%' 같은 범위도 숫자마다 본다."""
+    wanted = numbers_in(value)
+    have = [_as_float(t) for t in numbers_in(quote)]
+    return bool(wanted) and all(_as_float(w) in have for w in wanted)
+
+
 def quote_match(quote: str, source_norm: str) -> float:
     """인용이 원문에 있는 정도(0~1). 1이면 그대로 있다."""
     q = normalize_text(quote)
@@ -122,7 +129,7 @@ def verify(source_text: str, analysis: Analysis, perspective: Perspective,
         _check_quote(add, f"분석 {c.id}", c.quote, source_norm)
     for n in analysis.numbers:
         _check_quote(add, f"숫자 {n.id}", n.quote, source_norm)
-        if not any(same_number(n.value, tok) for tok in numbers_in(n.quote)):
+        if not value_in_quote(n.value, n.quote):
             add("error", f"숫자 {n.id}", f"값 '{n.value}'이(가) 인용 구절 안에 없습니다.")
 
     # 2. 해석은 실제 claim에 근거하는가
