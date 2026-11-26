@@ -49,9 +49,14 @@
   - 크레딧 절약: 기본은 없는 장면이나 내레이션이 바뀐 장면만 만든다. `--only 2,5`, `--force`, `--sample`(장면 1만 미리 듣기)
   - 앞뒤 장면 내레이션을 `prompt.previous_text/next_text`로 넘겨 억양을 잇는다(ssfm-v30 이상)
   - 첫 실측(ssfm-v30, 속도 0.9): 초당 약 5.8음절이라 `timing.CHARS_PER_SECOND`를 6.3에서 5.8로 낮췄다. 출력 wav는 44.1kHz 16비트 모노
-- [ ] **4. 영상 단계** (`shorts/video/`, Remotion)
-  - 고정 뼈대: 색·폰트 토큰, 자막 컴포넌트, 내레이션 배치, 시간 맞춤
-  - Claude가 쓰는 부분: `scenes/` 아래 장면 파일만
+- [x] **4. 영상 단계** (`shorts/video/`, Remotion 4.0.545, 1080×1920, 30fps)
+  - 준비: `cd shorts/video && npm install`
+  - 실행: `npm run stills -- --run-dir ../../.local/runs/<폴더>`(장면별 스틸, 겹침 확인) → `npm run render -- --run-dir ...`(→ `<폴더>/video.mp4`). `npm run studio -- --run-dir ...`로 미리 보기
+  - 실행 폴더를 Remotion public 폴더로 열어 `storyboard.json`·`voice.json`·`source.json`·`audio/`를 바로 읽는다. 복사 없음
+  - 고정 뼈대: `theme.ts`(색·글꼴·크기 토큰, 글꼴은 Noto Sans KR을 렌더 때 Google Fonts에서 받음), `components/`(자막·음성·공통 바탕: 진행 막대와 출처), `data.ts`(장면 길이 = voice.json의 scene_seconds, 대본이 음성과 다르면 멈춤)
+  - 장면: 기본은 `scenes/DefaultScene.tsx`가 on_screen_text를 한 줄씩 띄운다. 숫자가 든 줄은 숫자를 크게, 첫 줄 "우리 해석"은 주황 표시, "예시값" 줄은 주의 표시. 원문별로 따로 연출할 장면은 `scenes/`에 파일을 만들어 `registry.ts`에 등록한다
+  - 크롬이 설치돼 있으면 그것으로 렌더한다(`REMOTION_BROWSER`로 바꿀 수 있음). 54초 영상 렌더에 약 3분
+  - 자막은 단어 시각으로 줄을 바꾸고 말한 단어를 노란색으로 칠한다. 다만 내레이션 표기를 그대로 써서 숫자가 "사십칠"처럼 한글로 나온다(5단계에서 화면 표기로 바꿀 것)
 - [ ] **5. 자막·동기화**: 단어 단위 강조 자막, 핵심 단어와 화면 변화를 실제 시각으로 맞추기
 - [ ] **6. 검수·전달**: 스토리보드를 슬랙으로 보내 승인받기, 결과는 아티팩트나 슬랙으로 전달
 
