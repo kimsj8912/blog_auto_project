@@ -20,7 +20,16 @@ type Storyboard = {
 type Voice = {
   lead_in: number;
   tail: number;
-  scenes: {index: number; file: string; narration: string; audio_seconds: number; scene_seconds: number; speech_start: number; words: Word[]}[];
+  scenes: {
+    index: number;
+    file: string;
+    narration: string;
+    audio_seconds: number;
+    scene_seconds: number;
+    speech_start: number;
+    words: Word[];
+    screen_cues?: (number | null)[];
+  }[];
 };
 
 const getJson = async <T,>(name: string): Promise<T> => {
@@ -44,6 +53,8 @@ export const mergeRun = (sb: Storyboard, voice: Voice, origin: string): RunData 
       audioSeconds: v.audio_seconds,
       sceneSeconds: v.scene_seconds,
       words: v.words,
+      // 5단계 이전에 만든 voice.json에는 없다. 그때는 줄을 차례로 띄운다.
+      screenCues: v.screen_cues ?? s.on_screen_text.map(() => null),
     };
   });
   return {title: sb.title, origin, scenes};
