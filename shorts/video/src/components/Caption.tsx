@@ -44,7 +44,9 @@ export const Caption: React.FC<{words: Word[]; speechStart: number}> = ({words, 
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps - speechStart;
-  const line = activeLine(groupWords(words), t);
+  // 자막은 화면 표기(caption: '47%', 'LLM')로 보여 준다. 빈 caption은 앞 단어에 붙은 단어다.
+  const shown = words.map((w) => ({...w, text: w.caption ?? w.text})).filter((w) => w.text);
+  const line = activeLine(groupWords(shown), t);
   if (!line) return null;
   return (
     <div

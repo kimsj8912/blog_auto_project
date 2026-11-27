@@ -4,6 +4,7 @@
     python -m shorts.voice --run-dir .local/runs/<폴더> --only 2,5   # 특정 장면만 다시
     python -m shorts.voice --run-dir .local/runs/<폴더> --force      # 전부 다시
     python -m shorts.voice --run-dir .local/runs/<폴더> --sample     # 장면 1만 미리 듣기
+    python -m shorts.voice --run-dir .local/runs/<폴더> --sync-only  # 자막 표기·화면 문구 시각만 다시(크레딧 안 씀)
 
 결과: <run-dir>/audio/sceneN.wav, <run-dir>/voice.json(장면별 길이와 단어 시각).
 다시 만들 때마다 크레딧이 들므로 기본은 없는 장면만 만든다.
@@ -17,7 +18,7 @@ from pathlib import Path
 from shorts.pipeline import timing
 from shorts.pipeline.schemas import Storyboard
 
-from . import typecast
+from . import sync, typecast
 
 LEAD_IN, TAIL = 0.6, 0.9  # 장면 앞뒤 여백(초). timing.SCENE_PADDING_SECONDS와 같다.
 
@@ -54,6 +55,8 @@ def main(argv=None, session=None) -> int:
     p.add_argument("--only", help="이 장면만 다시 만든다(쉼표로 구분, 예: 2,5)")
     p.add_argument("--force", action="store_true", help="있는 장면도 전부 다시 만든다")
     p.add_argument("--sample", action="store_true", help="장면 1만 voice_sample.wav로 만든다")
+    p.add_argument("--sync-only", action="store_true",
+                   help="음성은 그대로 두고 자막 표기·화면 문구 시각만 다시 계산한다(크레딧 안 씀)")
     args = p.parse_args(argv)
 
     sb_path = args.run_dir / "storyboard.json"
@@ -62,21 +65,27 @@ def main(argv=None, session=None) -> int:
     storyboard = Storyboard.model_validate_json(sb_path.read_text(encoding="utf-8"))
     scenes = storyboard.scenes
 
-    try:
-        settings = typecast.Settings.from_env()
-    except typecast.TypecastError as e:
-        sys.exit(f"❌ {e}")
-    kwargs = {"session": session} if session is not None else {}
-
-    audio_dir = args.run_dir / "audio"
-    audio_dir.mkdir(exist_ok=True)
     voice_path = args.run_dir / "voice.json"
     old = json.loads(voice_path.read_text(encoding="utf-8")) if voice_path.exists() else {}
     entries = {s["index"]: s for s in old.get("scenes", [])}
     only = {int(x) for x in args.only.split(",")} if args.only else None
 
-    print(f"🎙️ 모델 {settings.model} · 속도 {settings.tempo} · 음높이 {settings.pitch}")
-    targets = scenes[:1] if args.sample else scenes
+    if args.sync_only:
+        if not old:
+            sys.exit(f"❌ {voice_path}가 없습니다. 먼저 음성을 만드세요.")
+        meta = {k: old.get(k) for k in ("model", "tempo", "pitch")}
+        targets = []
+    else:
+        try:
+            settings = typecast.Settings.from_env()
+        except typecast.TypecastError as e:
+            sys.exit(f"❌ {e}")
+        meta = {"model": settings.model, "tempo": settings.tempo, "pitch": settings.pitch}
+        print(f"🎙️ 모델 {settings.model} · 속도 {settings.tempo} · 음높이 {settings.pitch}")
+        targets = scenes[:1] if args.sample else scenes
+    kwargs = {"session": session} if session is not None else {}
+    (args.run_dir / "audio").mkdir(exist_ok=True)
+
     for pos, s in enumerate(targets):
         rel = "voice_sample.wav" if args.sample else f"audio/scene{s.index}.wav"
         out = args.run_dir / rel
@@ -104,10 +113,19 @@ def main(argv=None, session=None) -> int:
         print(f"✅ 미리 듣기: {args.run_dir / 'voice_sample.wav'}")
         return 0
 
-    ordered = [entries[s.index] for s in scenes if s.index in entries]
+    ordered = []
+    for s in scenes:
+        e = entries.get(s.index)
+        if e is None:
+            continue
+        if e.get("narration") != s.narration:
+            print(f"⚠️ 장면 {s.index}: 대본이 음성과 다릅니다. --only {s.index}로 음성을 다시 만드세요.")
+        # 5단계: 자막 표기와 화면 문구 시각. 크레딧 없이 --sync-only로 다시 계산할 수 있다.
+        sync.annotate(e, s.on_screen_text, [n.display for n in s.numbers])
+        ordered.append(e)
     total = sum(e["scene_seconds"] for e in ordered)
     voice = {
-        "model": settings.model, "tempo": settings.tempo, "pitch": settings.pitch,
+        **meta,
         "lead_in": LEAD_IN, "tail": TAIL,
         "total_seconds": round(total, 2),
         "scenes": ordered,

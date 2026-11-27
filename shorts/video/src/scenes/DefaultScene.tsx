@@ -36,11 +36,24 @@ export const classifyLines =(lines: string[], numbers: string[]): Line[] =>
     return {kind: 'text', text};
   });
 
-const STAGGER = 10; // 줄 사이 등장 간격(프레임)
+const STAGGER = 10; // 시각을 못 찾은 줄은 앞 줄보다 이만큼 늦게(프레임)
+const CUE_LEAD = 0.2; // 단어가 들리기 조금 전에 줄을 띄운다(초)
+
+/** 줄마다 등장 프레임. 5단계 screenCues(말 시작 기준 초)가 있으면 그 단어가 들릴 때, 없으면 앞 줄 뒤에. */
+export const lineStartFrames = (cues: (number | null)[], count: number, speechStart: number, fps: number): number[] => {
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const cue = cues[i];
+    const prev = i ? out[i - 1] : Math.round(speechStart * fps) - 6;
+    const at = cue == null ? prev + (i ? STAGGER : 0) : Math.round((speechStart + cue - CUE_LEAD) * fps);
+    out.push(Math.max(at, i ? out[i - 1] : 0));
+  }
+  return out;
+};
 
 export const DefaultScene: React.FC<SceneProps> = ({scene, fps}) => {
   const frame = useCurrentFrame();
-  const startAt = Math.round(scene.speechStart * fps) - 6;
+  const starts = lineStartFrames(scene.screenCues, scene.on_screen_text.length, scene.speechStart, fps);
   const lines = classifyLines(
     scene.on_screen_text,
     scene.numbers.map((n) => n.display),
@@ -70,7 +83,7 @@ export const DefaultScene: React.FC<SceneProps> = ({scene, fps}) => {
         }}
       >
       {lines.map((line, i) => {
-        const p = spring({frame: frame - startAt - i * STAGGER, fps, config: {damping: 200}});
+        const p = spring({frame: frame - starts[i], fps, config: {damping: 200}});
         const style: React.CSSProperties = {
           opacity: p,
           transform: `translateY(${interpolate(p, [0, 1], [40, 0])}px)`,
